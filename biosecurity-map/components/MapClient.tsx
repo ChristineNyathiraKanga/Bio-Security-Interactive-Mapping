@@ -352,7 +352,7 @@ export default function MapClient() {
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none h-16">
         <div className="flex items-center gap-3 p-3 pointer-events-auto">
           {/* Menu toggle for mobile */}
           <button
