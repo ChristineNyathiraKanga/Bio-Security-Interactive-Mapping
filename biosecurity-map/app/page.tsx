@@ -1,5 +1,4 @@
 ﻿import dynamic from 'next/dynamic';
-import Image from 'next/image';
 const MapClient = dynamic(() => import('@/components/MapClient'), {
   ssr: false,
   loading: () => (
