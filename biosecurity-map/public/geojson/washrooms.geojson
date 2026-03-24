@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","name":"Washroom","features":[{"type":"Feature","properties":{"Name":"Staff Wahroom"},"geometry":{"type":"Point","coordinates":[34.1214021,-0.5490974]}},{"type":"Feature","properties":{"Name":"Resident Wahroom"},"geometry":{"type":"Point","coordinates":[34.1208208,-0.5487711]}}]}
