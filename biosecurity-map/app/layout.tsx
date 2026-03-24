@@ -13,9 +13,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
-      <head>
-        <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
-      </head>
       <body className="antialiased" suppressHydrationWarning={true}>
         {children}
       </body>
