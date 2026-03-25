@@ -10,6 +10,8 @@ import LayerPanel from './LayerPanel';
 import FeaturePopup from './FeaturePopup'
 import SearchBar from './SearchBar';
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+const GEOJSON_BASE = process.env.NEXT_PUBLIC_GEOJSON_BASE_URL ?? '/geojson';
+const TILES_BASE   = process.env.NEXT_PUBLIC_TILES_BASE_URL  ?? '';
 
 interface FeatureInfo {
   properties: Record<string, unknown>;
@@ -26,15 +28,18 @@ export default function MapClient() {
     for (const cfg of LAYER_CONFIGS) {
       vis[cfg.id] = cfg.visible;
     }
-    // Per-level zone visibility (replaces single zones-fill toggle)
+
     for (const lvl of ZONE_LEVELS) {
       vis[`zone-level-${lvl}`] = true;
     }
-    vis['drone-ortho'] = true;
+    vis['drone-ortho'] = false;
     return vis;
   });
   const [selectedFeature, setSelectedFeature] = useState<FeatureInfo | null>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
+  useEffect(() => {
+    if (window.innerWidth >= 768) setPanelOpen(true);
+  }, []);
   const [searchFeatures, setSearchFeatures] = useState<Array<{ name: string; lng: number; lat: number; layer: string; properties: Record<string, unknown> }>>([]);
 
   // Initialize map
@@ -46,7 +51,7 @@ export default function MapClient() {
     const m = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      center: [34.1216, -0.5492], // Center of FARM_BOUNDS
+      center: [34.1216, -0.5492],
       zoom: 16,
       maxZoom: 22,
       minZoom: 14,
@@ -89,49 +94,38 @@ export default function MapClient() {
     const allFeatures: Array<{ name: string; lng: number; lat: number; layer: string; properties: Record<string, unknown> }> = [];
 
     async function loadLayers() {
-      // Add drone orthophoto raster tile layer (renders below vector layers)
-      try {
-        m.addSource('drone-ortho-src', {
-          type: 'raster',
-          tiles: [window.location.origin + '/tiles/ortho/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          bounds: [ORTHO_BOUNDS[0][0], ORTHO_BOUNDS[0][1], ORTHO_BOUNDS[1][0], ORTHO_BOUNDS[1][1]],
-          minzoom: 14,
-          maxzoom: 19,
-        });
-        m.addLayer({
-          id: 'drone-ortho',
-          type: 'raster',
-          source: 'drone-ortho-src',
-          paint: { 'raster-opacity': 0.9 },
-          layout: { visibility: 'visible' },
-        });
-        console.log('[MapClient] Drone ortho tile layer added');
-      } catch (err) {
-        console.error('[MapClient] Failed to add drone ortho layer:', err);
-      }
+      // Fetch all GeoJSON sources in parallel
+      const results = await Promise.allSettled(
+        LAYER_CONFIGS.map(async (cfg) => {
+          const filename = cfg.file.split('/').at(-1);
+          const url = `${GEOJSON_BASE}/${filename}`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
+          return { cfg, data: await res.json() };
+        })
+      );
 
-      for (const cfg of LAYER_CONFIGS) {
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          console.error('[MapClient] Layer fetch failed:', result.reason);
+          continue;
+        }
+        const { cfg, data: geojson } = result.value;
         try {
-          const res = await fetch(cfg.file);
-          const geojson = await res.json();
 
           const sourceId = cfg.id + '-src';
 
-          // For utilities, we use the same file but filter by type
+    
           let filterExpr: unknown[] | undefined;
           if (cfg.id === 'utilities-electrical') {
             filterExpr = ['==', ['get', 'utility_type'], 'electrical'];
           } else if (cfg.id === 'utilities-water') {
             filterExpr = ['==', ['get', 'utility_type'], 'water'];
           }
-
-          // Add source (reuse if already added for utilities)
           if (!m.getSource(sourceId)) {
             m.addSource(sourceId, { type: 'geojson', data: geojson });
           }
 
-          // Build layer
           const layerDef: mapboxgl.AnyLayer = {
             id: cfg.id,
             source: sourceId,
@@ -146,7 +140,6 @@ export default function MapClient() {
             (layerDef as Record<string, unknown>).filter = filterExpr;
           }
 
-          // For zones, create per-level layers instead of one monolithic layer
           if (cfg.id === 'zones-fill') {
             for (const lvl of ZONE_LEVELS) {
               const zc = ZONE_COLORS[lvl];
@@ -209,7 +202,7 @@ export default function MapClient() {
               if (geom.type === 'Point') {
                 [lng, lat] = geom.coordinates;
               } else if (geom.type === 'Polygon' || geom.type === 'MultiPolygon') {
-                // Use centroid approximation (average of first ring)
+       
                 const ring = geom.type === 'MultiPolygon' ? geom.coordinates[0][0] : geom.coordinates[0];
                 const sum = ring.reduce(
                   (acc: [number, number], c: [number, number]) => [acc[0] + c[0], acc[1] + c[1]],
@@ -243,7 +236,34 @@ export default function MapClient() {
     setLayerVisibility(prev => {
       const next = { ...prev };
 
-      // "zones-fill" acts as master toggle for all zone levels
+      if (layerId === 'drone-ortho') {
+        next[layerId] = !prev[layerId];
+        const m = map.current;
+        if (m) {
+          if (next[layerId] && !m.getSource('drone-ortho-src')) {
+            const tilesUrl = TILES_BASE
+              ? `${TILES_BASE}/{z}/{x}/{y}.png`
+              : `${window.location.origin}/tiles/ortho/{z}/{x}/{y}.png`;
+            m.addSource('drone-ortho-src', {
+              type: 'raster',
+              tiles: [tilesUrl],
+              tileSize: 256,
+              bounds: [ORTHO_BOUNDS[0][0], ORTHO_BOUNDS[0][1], ORTHO_BOUNDS[1][0], ORTHO_BOUNDS[1][1]],
+              minzoom: 14,
+              maxzoom: 19,
+            });
+            const firstVector = m.getStyle().layers.find(l => l.type !== 'raster' && l.type !== 'background');
+            m.addLayer(
+              { id: 'drone-ortho', type: 'raster', source: 'drone-ortho-src', paint: { 'raster-opacity': 0.9 } } as mapboxgl.RasterLayer,
+              firstVector?.id
+            );
+          } else if (m.getLayer('drone-ortho')) {
+            m.setLayoutProperty('drone-ortho', 'visibility', next[layerId] ? 'visible' : 'none');
+          }
+        }
+        return next;
+      }
+
       if (layerId === 'zones-fill') {
         const allOn = ZONE_LEVELS.every(l => prev[`zone-level-${l}`]);
         const newState = !allOn;
@@ -350,8 +370,8 @@ export default function MapClient() {
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none h-16">
-        <div className="flex items-center gap-3 p-3 pointer-events-auto">
+      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none h-16 overflow-hidden">
+        <div className="flex items-center gap-3 px-3 py-2 pointer-events-auto h-full">
           {/* Menu toggle for mobile */}
           <button
             onClick={() => setPanelOpen(o => !o)}

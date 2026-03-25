@@ -2,12 +2,9 @@
 const MapClient = dynamic(() => import('@/components/MapClient'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-screen bg-white">
+    <div className="flex items-center justify-center h-screen bg-white-950">
       <div className="text-center">
-        <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white">
-
-        </div>
-        <p className="text-gray-400 text-sm">Loading map...</p>
+        <p className="text-gray-400 text-sm tracking-wide font-medium">Loading map…</p>
       </div>
     </div>
   ),

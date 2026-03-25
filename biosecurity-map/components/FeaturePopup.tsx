@@ -98,7 +98,8 @@ function getFieldsForLayer(layerId: string, props: Record<string, unknown>) {
     'boundary': ['Name'],
   };
 
-  const fields = fieldSets[layerId] || Object.keys(props).filter(k => !k.startsWith('_'));
+  const lookupId = layerId.startsWith('zone-level-') ? 'zones-fill' : layerId;
+  const fields = fieldSets[lookupId] || Object.keys(props).filter(k => !k.startsWith('_'));
 
   return fields
     .filter(key => props[key] != null && props[key] !== '')
