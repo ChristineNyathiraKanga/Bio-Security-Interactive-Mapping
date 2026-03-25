@@ -385,9 +385,9 @@ export default function MapClient() {
 
           {/* Logo + Title */}
           <div className="bg-transparent flex items-center gap-3 flex-shrink-0">
-            {/* <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/50 flex-shrink-0 bg-white">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/50 flex-shrink-0 bg-white">
               <Image src="/logo.jpg" alt="Victory Farms" fill className="object-cover" sizes="48px" />
-            </div> */}
+            </div>
             <div className="">
               <h1 className="font-extrabold text-[18px] text-white leading-tight tracking-wide">Victory Farms</h1>
               <p className="text-[11px] font-bold text-white uppercase tracking-[0.2em] leading-tight mt-0.5">Biosecurity Map</p>
