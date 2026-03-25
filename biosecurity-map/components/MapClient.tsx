@@ -52,6 +52,8 @@ export default function MapClient() {
       minZoom: 14,
     });
 
+    map.current = m;
+
     m.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
     m.addControl(
       new mapboxgl.GeolocateControl({
@@ -65,7 +67,6 @@ export default function MapClient() {
     m.on('load', () => {
       console.log('[MapClient] Map loaded successfully');
       m.resize();
-      map.current = m;
       setMapLoaded(true);
     });
 
