@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import mapboxgl from 'mapbox-gl';
-import { LAYER_CONFIGS, FARM_BOUNDS, ORTHO_BOUNDS, ZONE_COLORS } from '@/config/map-styles';
+import { LAYER_CONFIGS, ORTHO_BOUNDS, ZONE_COLORS } from '@/config/map-styles';
 
 const ZONE_LEVELS = [1, 2, 3, 4, 5] as const;
 import LayerPanel from './LayerPanel';
@@ -46,11 +46,8 @@ export default function MapClient() {
     const m = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      bounds: [
-        [FARM_BOUNDS[0], FARM_BOUNDS[1]],
-        [FARM_BOUNDS[2], FARM_BOUNDS[3]],
-      ] as mapboxgl.LngLatBoundsLike,
-      fitBoundsOptions: { padding: 40 },
+      center: [34.1216, -0.5492], // Center of FARM_BOUNDS
+      zoom: 16,
       maxZoom: 22,
       minZoom: 14,
     });
@@ -67,7 +64,7 @@ export default function MapClient() {
 
     m.on('load', () => {
       console.log('[MapClient] Map loaded successfully');
-      m.resize();          
+      m.resize();
       map.current = m;
       setMapLoaded(true);
     });
