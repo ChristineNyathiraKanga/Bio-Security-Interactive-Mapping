@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Image from 'next/image';
+// import Image from 'next/image';
 import mapboxgl from 'mapbox-gl';
 import { LAYER_CONFIGS, ORTHO_BOUNDS, ZONE_COLORS } from '@/config/map-styles';
 
