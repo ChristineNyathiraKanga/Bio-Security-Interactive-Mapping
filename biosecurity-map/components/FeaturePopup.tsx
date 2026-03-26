@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { ZONE_COLORS } from '@/config/map-styles';
 
 interface FeaturePopupProps {
@@ -11,7 +12,7 @@ interface FeaturePopupProps {
   onClose: () => void;
 }
 
-export default function FeaturePopup({ feature, onClose }: FeaturePopupProps) {
+export default memo(function FeaturePopup({ feature, onClose }: FeaturePopupProps) {
   const { properties, layerId } = feature;
 
   // Determine which fields to show based on layer
@@ -71,7 +72,7 @@ export default function FeaturePopup({ feature, onClose }: FeaturePopupProps) {
       </div>
     </div>
   );
-}
+})
 
 function RiskBadge({ level }: { level: number }) {
   const color = ZONE_COLORS[level];

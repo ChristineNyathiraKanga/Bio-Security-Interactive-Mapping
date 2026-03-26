@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useDeferredValue, useMemo, useRef, useEffect, memo } from 'react';
 
 interface SearchFeature {
   name: string;
@@ -15,18 +15,19 @@ interface SearchBarProps {
   onSelect: (lng: number, lat: number) => void;
 }
 
-export default function SearchBar({ features, onSelect }: SearchBarProps) {
+export default memo(function SearchBar({ features, onSelect }: SearchBarProps) {
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const results = useMemo(() => {
-    if (!query.trim() || query.length < 2) return [];
-    const q = query.toLowerCase();
+    if (!deferredQuery.trim() || deferredQuery.length < 2) return [];
+    const q = deferredQuery.toLowerCase();
     return features
       .filter(f => f.name.toLowerCase().includes(q))
       .slice(0, 10);
-  }, [query, features]);
+  }, [deferredQuery, features]);
 
   // Close on outside click
   useEffect(() => {
@@ -69,4 +70,4 @@ export default function SearchBar({ features, onSelect }: SearchBarProps) {
       )}
     </div>
   );
-}
+})

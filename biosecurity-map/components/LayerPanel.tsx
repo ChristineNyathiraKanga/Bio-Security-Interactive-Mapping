@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { LAYER_CONFIGS, ZONE_COLORS, ZONE_LABELS } from '@/config/map-styles';
 import SearchBar from './SearchBar';
 
@@ -45,7 +46,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean, onChange: () =>
   );
 }
 
-export default function LayerPanel({ open, onClose, visibility, onToggle, searchFeatures, onSearchSelect }: LayerPanelProps) {
+export default memo(function LayerPanel({ open, onClose, visibility, onToggle, searchFeatures, onSearchSelect }: LayerPanelProps) {
   // Group layers by group
   const groups: Record<string, typeof LAYER_CONFIGS> = {};
   for (const cfg of LAYER_CONFIGS) {
@@ -179,7 +180,7 @@ export default function LayerPanel({ open, onClose, visibility, onToggle, search
       </div>
     </>
   );
-}
+})
 
 function LayerSwatch({ config }: { config: typeof LAYER_CONFIGS[number] }) {
   const paint = config.paint;

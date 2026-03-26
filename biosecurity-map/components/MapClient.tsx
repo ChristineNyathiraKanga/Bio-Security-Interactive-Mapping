@@ -232,36 +232,37 @@ export default function MapClient() {
     loadLayers();
   }, [mapLoaded]);
 
-  // Handle layer visibility toggles
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapLoaded) return;
+
+    for (const [layerId, visible] of Object.entries(layerVisibility)) {
+      const vis = visible ? 'visible' : 'none';
+
+      // Zone levels have an outline companion layer
+      if (/^zone-level-\d$/.test(layerId)) {
+        if (m.getLayer(layerId)) m.setLayoutProperty(layerId, 'visibility', vis);
+        if (m.getLayer(`${layerId}-outline`)) m.setLayoutProperty(`${layerId}-outline`, 'visibility', vis);
+        continue;
+      }
+
+      if (layerId === 'zones-fill' || layerId === 'drone-ortho') continue; // handled separately
+
+      if (m.getLayer(layerId)) {
+        m.setLayoutProperty(layerId, 'visibility', vis);
+      }
+      if (layerId === 'infrastructure' && m.getLayer('infrastructure-labels')) {
+        m.setLayoutProperty('infrastructure-labels', 'visibility', vis);
+      }
+    }
+  }, [layerVisibility, mapLoaded]);
+
   const handleToggleLayer = useCallback((layerId: string) => {
     setLayerVisibility(prev => {
       const next = { ...prev };
 
       if (layerId === 'drone-ortho') {
         next[layerId] = !prev[layerId];
-        const m = map.current;
-        if (m) {
-          if (next[layerId] && !m.getSource('drone-ortho-src')) {
-            const tilesUrl = TILES_BASE
-              ? `${TILES_BASE}/{z}/{x}/{y}.png`
-              : `${window.location.origin}/tiles/ortho/{z}/{x}/{y}.png`;
-            m.addSource('drone-ortho-src', {
-              type: 'raster',
-              tiles: [tilesUrl],
-              tileSize: 256,
-              bounds: [ORTHO_BOUNDS[0][0], ORTHO_BOUNDS[0][1], ORTHO_BOUNDS[1][0], ORTHO_BOUNDS[1][1]],
-              minzoom: 14,
-              maxzoom: 19,
-            });
-            const firstVector = m.getStyle().layers.find(l => l.type !== 'raster' && l.type !== 'background');
-            m.addLayer(
-              { id: 'drone-ortho', type: 'raster', source: 'drone-ortho-src', paint: { 'raster-opacity': 0.9 } } as mapboxgl.RasterLayer,
-              firstVector?.id
-            );
-          } else if (m.getLayer('drone-ortho')) {
-            m.setLayoutProperty('drone-ortho', 'visibility', next[layerId] ? 'visible' : 'none');
-          }
-        }
         return next;
       }
 
@@ -272,13 +273,6 @@ export default function MapClient() {
           next[`zone-level-${lvl}`] = newState;
         }
         next['zones-fill'] = newState;
-        if (map.current) {
-          const vis = newState ? 'visible' : 'none';
-          for (const lvl of ZONE_LEVELS) {
-            if (map.current.getLayer(`zone-level-${lvl}`)) map.current.setLayoutProperty(`zone-level-${lvl}`, 'visibility', vis);
-            if (map.current.getLayer(`zone-level-${lvl}-outline`)) map.current.setLayoutProperty(`zone-level-${lvl}-outline`, 'visibility', vis);
-          }
-        }
         return next;
       }
 
@@ -286,30 +280,46 @@ export default function MapClient() {
       const zoneLevelMatch = layerId.match(/^zone-level-(\d)$/);
       if (zoneLevelMatch) {
         next[layerId] = !prev[layerId];
-        const vis = next[layerId] ? 'visible' : 'none';
-        if (map.current) {
-          if (map.current.getLayer(layerId)) map.current.setLayoutProperty(layerId, 'visibility', vis);
-          if (map.current.getLayer(`${layerId}-outline`)) map.current.setLayoutProperty(`${layerId}-outline`, 'visibility', vis);
-        }
-        // Update master toggle state
-        next['zones-fill'] = ZONE_LEVELS.every(l => next[`zone-level-${l}`]);
+        next['zones-fill'] = ZONE_LEVELS.every(l => {
+          const key = `zone-level-${l}`;
+          return key === layerId ? next[key] : prev[key];
+        });
         return next;
       }
 
       // Generic toggle
       next[layerId] = !prev[layerId];
-      if (map.current) {
-        const visibility = next[layerId] ? 'visible' : 'none';
-        if (map.current.getLayer(layerId)) {
-          map.current.setLayoutProperty(layerId, 'visibility', visibility);
-        }
-        if (layerId === 'infrastructure' && map.current.getLayer('infrastructure-labels')) {
-          map.current.setLayoutProperty('infrastructure-labels', 'visibility', visibility);
-        }
-      }
       return next;
     });
   }, []);
+
+  // Lazily add drone-ortho source/layer on first enable
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapLoaded) return;
+
+    const visible = layerVisibility['drone-ortho'];
+    if (visible && !m.getSource('drone-ortho-src')) {
+      const tilesUrl = TILES_BASE
+        ? `${TILES_BASE}/{z}/{x}/{y}.png`
+        : `${window.location.origin}/tiles/ortho/{z}/{x}/{y}.png`;
+      m.addSource('drone-ortho-src', {
+        type: 'raster',
+        tiles: [tilesUrl],
+        tileSize: 256,
+        bounds: [ORTHO_BOUNDS[0][0], ORTHO_BOUNDS[0][1], ORTHO_BOUNDS[1][0], ORTHO_BOUNDS[1][1]],
+        minzoom: 14,
+        maxzoom: 19,
+      });
+      const firstVector = m.getStyle().layers.find(l => l.type !== 'raster' && l.type !== 'background');
+      m.addLayer(
+        { id: 'drone-ortho', type: 'raster', source: 'drone-ortho-src', paint: { 'raster-opacity': 0.9 } } as mapboxgl.RasterLayer,
+        firstVector?.id
+      );
+    } else if (m.getLayer('drone-ortho')) {
+      m.setLayoutProperty('drone-ortho', 'visibility', visible ? 'visible' : 'none');
+    }
+  }, [layerVisibility, mapLoaded]);
 
   // Handle map clicks for popups
   useEffect(() => {
