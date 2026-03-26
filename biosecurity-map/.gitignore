@@ -36,5 +36,9 @@ yarn-error.log*
 next-env.d.ts
 
 #mjs scripts
-*.mjs
+normalize-geojson.mjs
+tile-orthophoto.mjs
 
+# local data assets (served from AWS CloudFront in production)
+/public/geojson/
+/public/tiles/
