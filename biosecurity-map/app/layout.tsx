@@ -13,6 +13,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
+      <head>
+        {/* Preconnect to Mapbox tile servers*/}
+        <link rel="preconnect" href="https://api.mapbox.com" />
+        <link rel="preconnect" href="https://events.mapbox.com" />
+        <link rel="preconnect" href="https://tiles.mapbox.com" />
+        <link rel="dns-prefetch" href="https://tiles.mapbox.com" />
+        {/* Preconnect to CloudFront CDN for GeoJSON + orthophoto tiles */}
+        <link rel="preconnect" href="https://d235u1672zhp9j.cloudfront.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://d235u1672zhp9j.cloudfront.net" />
+      </head>
       <body className="antialiased" suppressHydrationWarning={true}>
         {children}
       </body>

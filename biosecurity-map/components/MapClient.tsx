@@ -366,7 +366,7 @@ export default function MapClient() {
   }, []);
 
   return (
-    <div className="fixed inset-0">
+    <div className="fixed inset-0 bg-gray-900">
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Header */}
