@@ -33,7 +33,7 @@ export default function MapClient() {
     for (const lvl of ZONE_LEVELS) {
       vis[`zone-level-${lvl}`] = true;
     }
-    vis['drone-ortho'] = false;
+    vis['drone-ortho'] = true;
     return vis;
   });
   const [selectedFeature, setSelectedFeature] = useState<FeatureInfo | null>(null);
@@ -73,6 +73,24 @@ export default function MapClient() {
     m.on('load', () => {
       console.log('[MapClient] Map loaded successfully');
       m.resize();
+
+      const tilesUrl = TILES_BASE
+        ? `${TILES_BASE}/{z}/{x}/{y}.png`
+        : `${window.location.origin}/tiles/ortho/{z}/{x}/{y}.png`;
+      m.addSource('drone-ortho-src', {
+        type: 'raster',
+        tiles: [tilesUrl],
+        tileSize: 256,
+        bounds: [ORTHO_BOUNDS[0][0], ORTHO_BOUNDS[0][1], ORTHO_BOUNDS[1][0], ORTHO_BOUNDS[1][1]],
+        minzoom: 14,
+        maxzoom: 19,
+      });
+      const firstVector = m.getStyle().layers.find(l => l.type !== 'raster' && l.type !== 'background');
+      m.addLayer(
+        { id: 'drone-ortho', type: 'raster', source: 'drone-ortho-src', paint: { 'raster-opacity': 0.9 } } as mapboxgl.RasterLayer,
+        firstVector?.id
+      );
+
       setMapLoaded(true);
     });
 
@@ -293,32 +311,11 @@ export default function MapClient() {
     });
   }, []);
 
-  // Lazily add drone-ortho source/layer on first enable
+  // Sync drone-ortho visibility (source/layer added eagerly in map init)
   useEffect(() => {
     const m = map.current;
-    if (!m || !mapLoaded) return;
-
-    const visible = layerVisibility['drone-ortho'];
-    if (visible && !m.getSource('drone-ortho-src')) {
-      const tilesUrl = TILES_BASE
-        ? `${TILES_BASE}/{z}/{x}/{y}.png`
-        : `${window.location.origin}/tiles/ortho/{z}/{x}/{y}.png`;
-      m.addSource('drone-ortho-src', {
-        type: 'raster',
-        tiles: [tilesUrl],
-        tileSize: 256,
-        bounds: [ORTHO_BOUNDS[0][0], ORTHO_BOUNDS[0][1], ORTHO_BOUNDS[1][0], ORTHO_BOUNDS[1][1]],
-        minzoom: 14,
-        maxzoom: 19,
-      });
-      const firstVector = m.getStyle().layers.find(l => l.type !== 'raster' && l.type !== 'background');
-      m.addLayer(
-        { id: 'drone-ortho', type: 'raster', source: 'drone-ortho-src', paint: { 'raster-opacity': 0.9 } } as mapboxgl.RasterLayer,
-        firstVector?.id
-      );
-    } else if (m.getLayer('drone-ortho')) {
-      m.setLayoutProperty('drone-ortho', 'visibility', visible ? 'visible' : 'none');
-    }
+    if (!m || !mapLoaded || !m.getLayer('drone-ortho')) return;
+    m.setLayoutProperty('drone-ortho', 'visibility', layerVisibility['drone-ortho'] ? 'visible' : 'none');
   }, [layerVisibility, mapLoaded]);
 
   // Handle map clicks for popups
@@ -405,7 +402,6 @@ export default function MapClient() {
             </div>
           </div>
 
-          {/* Search — desktop only (mobile search is in LayerPanel bottom sheet) */}
           <div className="hidden md:block flex-1 max-w-xs pointer-events-auto ml-auto">
             <SearchBar features={searchFeatures} onSelect={handleSearchSelect} />
           </div>
