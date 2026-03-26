@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "mapbox-gl/dist/mapbox-gl.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,10 +13,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
-      <head>
-        <link rel="preconnect" href="https://api.mapbox.com" />
-        <link rel="preconnect" href="https://events.mapbox.com" />
-      </head>
       <body className="antialiased" suppressHydrationWarning={true}>
         {children}
       </body>
