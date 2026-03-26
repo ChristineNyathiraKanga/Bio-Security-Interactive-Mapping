@@ -58,7 +58,7 @@ export default function LayerPanel({ open, onClose, visibility, onToggle, search
       {/* Mobile backdrop */}
       {open && (
         <div
-          className="md:hidden fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-20 transition-opacity"
+          className="md:hidden fixed inset-0 bg-white/20 backdrop-blur-sm z-20 transition-opacity"
           onClick={onClose}
         />
       )}

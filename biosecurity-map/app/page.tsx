@@ -4,7 +4,7 @@ import Image from 'next/image';
 const MapClient = dynamic(() => import('@/components/MapClient'), {
   ssr: false,
   loading: () => (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-900 gap-4">
+    <div className="flex flex-col items-center justify-center h-screen bg-white gap-4">
       <Image
         src="/logo.jpg"
         alt="Victory Farms"
