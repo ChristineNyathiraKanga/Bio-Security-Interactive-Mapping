@@ -12,6 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    
     <html lang="en" suppressHydrationWarning={true}>
       <head>
         {/* Preconnect to Mapbox tile servers*/}
@@ -22,10 +23,12 @@ export default function RootLayout({
         {/* Preconnect to CloudFront CDN for GeoJSON + orthophoto tiles */}
         <link rel="preconnect" href="https://d235u1672zhp9j.cloudfront.net" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://d235u1672zhp9j.cloudfront.net" />
+        <Analytics />
       </head>
       <body className="antialiased" suppressHydrationWarning={true}>
         {children}
       </body>
     </html>
+    
   );
 }
