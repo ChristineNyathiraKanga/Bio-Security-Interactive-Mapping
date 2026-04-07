@@ -20,7 +20,7 @@ const MapClient = dynamic(() => import('@/components/MapClient'), {
             </div>
             <div>
               <h1 className="font-extrabold text-[18px] text-gray-800 leading-tight tracking-wide">Victory Farms</h1>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] leading-tight mt-0.5">Biosecurity Map</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] leading-tight mt-0.5">Biosecurity Site Map</p>
             </div>
           </div>
         </div>
